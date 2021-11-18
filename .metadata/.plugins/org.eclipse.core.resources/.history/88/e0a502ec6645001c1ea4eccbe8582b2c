@@ -1,0 +1,119 @@
+package com.git.c2cexchange.Item;
+
+import java.io.IOException;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+
+import org.json.XML;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.stereotype.Service;
+
+import com.git.c2cexchange.Item.event.ExchangeItem;
+import com.google.gson.Gson;
+
+@Service
+public class MarketItemService {
+	
+
+	MarketItemRepository repo;
+	
+	@Autowired
+	public MarketItemService(MarketItemRepository repo) {
+		this.repo = repo;
+	}
+
+
+	// 데이터가 갱신되는 시점에 캐시 삭제
+	// ex) 타 시스템에서 데이터를 받아와서 저장함
+//	@CacheEvict(value="products", allEntries = true)
+//	@RabbitListener(queues = "sales.product.create")
+	@Scheduled(cron = "0 * * * * *")
+//	@CacheEvict(value = "marketItem-current", allEntries = true)
+	public void requestMarketItem() throws IOException{
+		String[] crcHaves = {"USD"};
+		for (String crcHave : crcHaves) {
+			requestMarketItem(crcHave);
+		}
+	}
+	
+	@SuppressWarnings("deprecation")
+	public void requestMarketItem(String crcHave) throws IOException{
+		System.out.println(new Date().toLocaleString());
+		
+		StringBuilder builder = new StringBuilder();
+////		http://54.180.135.245:8080/saleItemList
+		builder.append("http://54.180.135.245:8080");
+		builder.append("/saleItemList");
+		
+		URL url= new URL(builder.toString());
+		System.out.println(url);
+		
+		HttpURLConnection con = (HttpURLConnection) url.openConnection();
+		
+		byte[] result = con.getInputStream().readAllBytes();
+		
+		String data = new String(result, "UTF-8");
+		
+		String json = XML.toJSONObject(data).toString(2);
+		
+		MarketItemResponse response = new Gson().fromJson(json, MarketItemResponse.class);
+
+		List<MarketItem> list = new ArrayList<MarketItem>();
+		for(MarketItemResponse.Item item:response
+				.getResponse().getItems().getItem()) {
+			MarketItem record = MarketItem
+					.builder()
+					.itemId(item.getItemId())
+					.hostName(item.getHostName()
+							.isEmpty() ? null:String
+							.valueOf(item.getHostName()))
+					.crcHave(item.getCrcHave()
+							.isEmpty() ? null:String
+									.valueOf(item.getCrcHave()))
+					.cntHave(item.getCntHave())
+					.crcWant(item.getCrcWant()
+							.isEmpty() ? null:String
+									.valueOf(item.getCrcWant()))
+					.cntWant(item.getCntWant())
+					.content(item.getContent()
+							.isEmpty() ? null:String
+									.valueOf(item.getContent()))
+					.status(item.isStatus())
+					.dday(item.getDday()
+							.isEmpty() ? null:String
+									.valueOf(item.getDday()))
+					.build();
+			
+			list.add(record);
+		}
+		repo.saveAll(list);
+	}
+//	private int itemId;
+//	private String hostName;
+//	private String crcHave;
+//	private int cntHave;
+//	private String crcWant;
+//	private int cntWant;
+//	private String content;
+//	private boolean status;
+//	private String dday;
+
+//	public MarketItem saveProduct(SalesProduct salesProduct) {
+//		MarketItem product = Product
+//							.builder()
+//							.category(salesProduct.getCategory())
+//							.productCode(salesProduct.getCode())
+//							.productName(salesProduct.getName())
+//							.price(salesProduct.getPrice())
+//							.salesProductId(salesProduct.getId())
+//							.build();
+//		repo.save(product);
+//
+//		return product;
+//	}
+}

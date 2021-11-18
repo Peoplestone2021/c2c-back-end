@@ -1,0 +1,17 @@
+package com.git.c2cexchange.sale;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.RestController;
+
+@RestController
+public class SaleController {
+	private SaleRepository repo;
+	private SaleService service;
+	
+	@Autowired
+	public SaleController(SaleListRepository repo, SaleListService service) throws InterruptedException{
+		this.repo = repo;
+		this.service = service;
+	}
+
+}

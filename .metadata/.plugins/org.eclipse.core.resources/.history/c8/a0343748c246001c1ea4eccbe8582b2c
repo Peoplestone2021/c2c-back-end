@@ -1,0 +1,5 @@
+package com.git.c2cexchange.comment;
+
+public class CommentItem {
+
+}

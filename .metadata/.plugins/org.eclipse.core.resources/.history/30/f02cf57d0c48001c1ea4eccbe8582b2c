@@ -1,0 +1,15 @@
+package com.git.c2cexchange.sale;
+
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
+import org.springframework.stereotype.Service;
+
+@Service
+public class SaleService {
+	
+	private RabbitTemplate rabbit;
+	
+	private SaleRepository saleRepository;
+
+
+
+}

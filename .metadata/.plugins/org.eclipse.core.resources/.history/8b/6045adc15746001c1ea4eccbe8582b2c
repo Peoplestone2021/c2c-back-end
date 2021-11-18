@@ -1,0 +1,26 @@
+package com.git.servicemarket;
+
+public class MarketItemList {
+	private long itemId;
+	private String hostName;
+	private String cntHave;
+	private int crcHave;
+	private String cntWant;
+	private int crcWant;
+	private String content;
+	private boolean status;
+	private String dday;
+	
+	
+	
+//    "itemId": 1,
+//    "hostName": "change",
+//    "cntHave": "USD",
+//    "crcHave": 100,
+//    "cntWant": "KRW",
+//    "crcWant": 118470,
+//    "content": "22",
+//    "status": true,
+//    "dday": "202111"
+
+}

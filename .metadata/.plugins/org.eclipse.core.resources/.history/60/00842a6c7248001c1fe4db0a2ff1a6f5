@@ -1,0 +1,92 @@
+package com.git.c2cexchange.market;
+
+import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+
+import javax.transaction.Transactional;
+
+import org.springframework.amqp.core.Message;
+import org.springframework.amqp.rabbit.annotation.RabbitListener;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
+
+import com.git.c2cexchange.market.request.MarketItemRequest;
+
+@Service
+public class MarketItemService {
+	
+	private RabbitTemplate rabbit;
+	
+	private MarketItemRepository marketItemRepo;
+	
+	private Map<String, SseEmitter> emitters = new ConcurrentHashMap<String, SseEmitter>();
+	
+	public void putEmitter(String clientId, SseEmitter emitter) {
+		this.emitters.put(clientId, emitter);
+		System.out.println(emitters.size());
+	}
+	
+	public SseEmitter getEmitter(String clientId) {
+		return this.emitters.get(clientId);
+	}
+
+	@RabbitListener(queues = "service.market")
+	public void receiveMessage(String marketItem) throws UnsupportedEncodingException {
+
+		System.out.println("-- service.market --");
+		System.out.println(marketItem);
+
+		emitters.values().parallelStream().forEach(emitter -> {
+			try {
+				emitter.send(marketItem);
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		});
+
+	}
+	
+	@Transactional
+//	(rollbackOn = Exeption.class)
+	public MarketItem saveOrder(MarketItemRequest reqMarketItem) {
+		
+		MarketItem toSaveMarketItem = MarketItem.builder()
+				.itemId(reqMarketItem.getItemId())
+				.hostName(reqMarketItem.getHostName())
+				.crcHave(reqMarketItem.getCrcHave())
+				.cntHave(reqMarketItem.getCntHave())
+				.crcWant(reqMarketItem.getCrcWant())
+				.cntWant(reqMarketItem.getCntWant())
+				.content(reqMarketItem.getContent())
+				.status(reqMarketItem.isStatus())
+				.dday(reqMarketItem.getDday())
+				.build();
+		
+		MarketItem saveMarketItem = marketItemRepo.save(toSaveMarketItem);
+				
+				
+		return saveMarketItem;
+	}
+	
+//====		보내는 쪽
+	
+	@Autowired
+	public MarketItemService(RabbitTemplate rabbit) {
+		this.marketItemRepo = marketItemRepo;
+		this.rabbit = rabbit;
+	}
+	
+	public void sendItem(byte[] marketItem) {
+		rabbit.send("service.market", new Message(marketItem));
+	}
+	
+	
+	
+	
+
+}

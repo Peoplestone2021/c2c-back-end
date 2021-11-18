@@ -1,0 +1,76 @@
+package com.git.c2cexchange.Item;
+
+import java.io.IOException;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.util.Date;
+import org.json.XML;
+
+import org.springframework.amqp.rabbit.annotation.RabbitListener;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.stereotype.Service;
+
+import com.git.c2cexchange.Item.event.ExchangeItem;
+
+@Service
+public class MarketItemService {
+	
+	MarketItemRepository repo;
+	
+	@Autowired
+	public MarketItemService(MarketItemRepository repo) {
+		this.repo = repo;
+	}
+
+
+	// 데이터가 갱신되는 시점에 캐시 삭제
+	// ex) 타 시스템에서 데이터를 받아와서 저장함
+//	@CacheEvict(value="products", allEntries = true)
+//	@RabbitListener(queues = "sales.product.create")
+	@Scheduled(cron = "0 0 12 * * *")
+//	@CacheEvict(value = "marketItem-current", allEntries = true)
+	public void requestMarketItem() throws IOException{
+		String[] crcHaves = {"USD"};
+		for (String crcHave : crcHaves) {
+			requestMarketItem(crcHave);
+		}
+	}
+	
+	@SuppressWarnings("deprecation")
+	public void requestMarketItem(String crcHave) throws IOException{
+		System.out.println(new Date().toLocaleString());
+		
+		StringBuilder builder = new StringBuilder();
+//		http://54.180.135.245:8080/saleItemList
+		builder.append("http://54.180.135.245:8080");
+		builder.append("/saleItemList");
+		
+		URL url= new URL(builder.toString());
+		
+		HttpURLConnection con = (HttpURLConnection) url.openConnection();
+		
+		byte[] result = con.getInputStream().readAllBytes();
+		
+		String data = new String(result, "UTF-8");
+		
+		String json = XML.toJSONObject(data).toString(2);
+		
+		
+	}
+
+//	public MarketItem saveProduct(SalesProduct salesProduct) {
+//		MarketItem product = Product
+//							.builder()
+//							.category(salesProduct.getCategory())
+//							.productCode(salesProduct.getCode())
+//							.productName(salesProduct.getName())
+//							.price(salesProduct.getPrice())
+//							.salesProductId(salesProduct.getId())
+//							.build();
+//		repo.save(product);
+//
+//		return product;
+//	}
+}

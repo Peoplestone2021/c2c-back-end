@@ -1,0 +1,34 @@
+package com.git.c2cexchange.market;
+
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+
+import org.springframework.amqp.core.Message;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
+
+@Service
+public class MarketItemService {
+	
+	private RabbitTemplate rabbit;
+	
+	private MarketItemRepository marketItemRepository;
+	
+	private Map<String, SseEmitter> emitters = new ConcurrentHashMap<String, SseEmitter>();
+	
+	public void putEmitter(String clientId, SseEmitter emitter) {
+		this.emitters.put(clientId, emitter);
+		System.out.println(emitters.size());
+	}
+	
+	@Autowired
+	public MarketItemService(RabbitTemplate rabbit) {
+		this.rabbit = rabbit;
+	}
+	
+	public void sendMessage(byte[] message) {
+		rabbit.send("service.market", new Message(message));
+	}
+}

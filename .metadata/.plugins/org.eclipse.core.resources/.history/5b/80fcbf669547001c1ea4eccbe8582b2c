@@ -1,0 +1,37 @@
+package com.git.c2cexchange.comment;
+
+import java.util.List;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
+@RestController
+public class CommentController {
+	
+	private CommentItemRepository repo;
+	
+	@Autowired
+	public CommentController(CommentItemRepository repo) {
+		this.repo=repo;
+	}
+	
+	@GetMapping(value="/commentItem")
+	public List<CommentItem> getCommentItems() throws InterruptedException {
+		return repo.findAll(Sort.by("commentId").descending());
+	}
+	
+	@GetMapping(value = "/commentItem")
+	public Page<CommentItem> getCommentItemPaging(@RequestParam int page, @RequestParam int size){
+		return repo.findAll(PageRequest.of(page,  size, Sort.by("commentId").descending()));
+	}
+	
+	@PostMapping(value = "/commentItem")
+	public Comment commentItem
+
+}

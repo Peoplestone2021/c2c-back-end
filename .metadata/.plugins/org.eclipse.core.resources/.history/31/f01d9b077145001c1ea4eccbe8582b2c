@@ -1,0 +1,49 @@
+package com.git.c2cexchange.Item;
+
+import java.util.List;
+
+//import java.util.List;
+
+import lombok.Data;
+
+@Data
+public class MarketItemResponse {
+	private Response response;
+
+	@Data
+	public class Response{
+		private Items items;
+		
+	}
+//	
+//	@Data
+//	public class Header {
+//		private String resultCode;
+//		private String resultMsg;
+//	}
+//	
+//	@Data
+//	public class Body {
+//		private Items items;
+//	}
+//	
+	@Data
+	public class Items {
+		private List<Item> item;
+	}
+
+	@Data
+	public class Item {
+		private int itemId;
+		private String hostName;
+		private String crcHave;
+		private int cntHave;
+		private String crcWant;
+		private int cntWant;
+		private String content;
+		private boolean status;
+		private String dday;
+		
+	}
+
+}

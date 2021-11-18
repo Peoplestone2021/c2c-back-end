@@ -1,0 +1,14 @@
+package com.git.c2cexchange.market.request;
+
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+@Data
+@NoArgsConstructor
+public class MarketItemRequest {
+	
+	private long itemId;
+	private String hostName;
+	private 
+
+}

@@ -1,0 +1,23 @@
+package com.git.c2cexchange.market;
+
+import org.springframework.amqp.core.Message;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+@Service
+public class MarketItemService {
+	
+	private RabbitTemplate rabbit;
+	
+	private MarketItemRepository marketItemRepository;
+	
+	@Autowired
+	public MarketItemService(RabbitTemplate rabbit) {
+		this.rabbit = rabbit;
+	}
+	
+	public void sendMessage(byte[] message) {
+		rabbit.send("service.market", new Message(message));
+	}
+}

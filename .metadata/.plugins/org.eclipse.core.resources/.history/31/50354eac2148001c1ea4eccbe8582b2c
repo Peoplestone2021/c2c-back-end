@@ -1,0 +1,97 @@
+package com.git.c2cexchange.market;
+
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
+import com.git.c2cexchange.lib.TextProcesser;
+
+@RestController
+public class MarketItemController {
+	
+	private MarketItemRepository repo;
+	private MarketItemService service;
+	private Map<String, String> clientConnectedMap = new HashMap<String, String>();
+
+	
+	@Autowired
+	public MarketItemController(MarketItemRepository repo) {
+		this.repo=repo;
+		this.service=service;
+	}
+	
+	@GetMapping(value="/marketItems")
+	public List<MarketItem> getMarketItems() throws InterruptedException{
+		return repo.findAll(Sort.by("itemId").descending());
+	}
+	
+	@GetMapping("/marketItems/paging")
+	public Page<MarketItem> getMarketItemsPaging(@RequestParam int page, @RequestParam int size){
+		return repo.findAll(PageRequest.of(page,  size, Sort.by("itemId").descending()));
+	}
+	
+	@PostMapping("/marketItems")
+	public MarketItem postMarketItem(@RequestBody MarketItem marketItem, HttpServletResponse res) throws InterruptedException {
+		
+		if(TextProcesser.isEmpyText(marketItem.getHostName())) {
+			res.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+			return null;
+		}
+		if(TextProcesser.isEmpyText(marketItem.getCrcHave())) {
+			res.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+			return null;
+		}
+		if(TextProcesser.isEmpyText(marketItem.getCrcWant())) {
+			res.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+			return null;
+		}
+		if(TextProcesser.isEmpyText(marketItem.getContent())) {
+			res.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+			return null;
+		}
+		if(TextProcesser.isEmpyText(marketItem.getDday())) {
+			res.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+			return null;
+		}
+		
+		MarketItem marketItemList = MarketItem.builder()
+				.itemId(marketItem.getItemId())
+				.hostName(marketItem.getHostName())
+				.crcHave(marketItem.getCrcHave())
+				.cntHave(marketItem.getCntHave())
+				.crcWant(marketItem.getCrcWant())
+				.cntWant(marketItem.getCntWant())
+				.content(marketItem.getContent())
+				.status(marketItem.isStatus())
+				.dday(marketItem.getDday())
+				.build();
+		
+		MarketItem marketItemSaved = repo.save(marketItemList);
+		
+		return marketItemSaved;
+	}
+	
+	@PostMapping(value = "/send-message")
+	public boolean sendMessage(@RequestBody String message, HttpServletRequest req) {
+		System.out.println(req.getHeader("content-type"));
+
+		System.out.println(message);
+		service.sendMessage(message.getBytes());
+		
+		return true;
+	}
+
+}

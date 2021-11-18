@@ -1,0 +1,35 @@
+package com.git.servicemarket;
+
+import java.util.List;
+
+import javax.servlet.http.HttpServletRequest;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.GetMapping;
+
+public class ItemController {
+	ServiceMarketClient client;
+	
+	@Autowired
+	public ItemController(ServiceMarketClient client) {
+		this.client = client;
+	}
+	
+	@GetMapping(value="/test")
+	public String test(HttpServletRequest req) {
+		System.out.println("--service market--");
+		return "123";
+	}
+	
+	@GetMapping(value="/test2")
+	public String test2() {
+		return client.test();
+	}
+	
+	public List<MarketItemList> getMarketItems(){
+		System.out.println("--serviceMarketItem--");
+		return client.getSaleItemList();
+	}
+
+
+}
