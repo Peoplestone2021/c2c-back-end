@@ -1,0 +1,28 @@
+package com.git.c2cexchange.market.event;
+
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+public class ExchangeOrder {
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
+	private long marketId;
+	private int itemId;
+	private String hostName;
+	private String crcHave;
+	private int cntHave;
+	private String crcWant;
+	private int cntWant;
+	private String content;
+	private boolean status;
+	private String dday;
+
+}

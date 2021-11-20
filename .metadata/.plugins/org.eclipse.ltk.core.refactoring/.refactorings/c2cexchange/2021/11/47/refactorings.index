@@ -13,3 +13,5 @@
 1637146720978	Rename type 'CommentItemRepository'
 1637198029506	Rename compilation unit 'ServiceController.java'
 1637198052244	Rename type 'SaleServiceController'
+1637328375300	Rename type 'ExchangeOrder'
+1637331932761	Rename type 'SaleListItem'

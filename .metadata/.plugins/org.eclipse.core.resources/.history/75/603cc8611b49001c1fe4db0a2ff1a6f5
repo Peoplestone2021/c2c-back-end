@@ -1,0 +1,81 @@
+package com.git.c2cexchange.market;
+
+import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.transaction.Transactional;
+
+import org.springframework.amqp.core.Message;
+import org.springframework.amqp.rabbit.annotation.RabbitListener;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
+
+import com.git.c2cexchange.market.event.ExchangeOrder;
+import com.git.c2cexchange.market.request.MarketItemRequest;
+import com.google.gson.Gson;
+
+@Service
+public class MarketItemService {
+	
+	MarketItemRepository repo;
+	
+	public MarketItemService(MarketItemRepository repo) {
+		this.repo = repo;
+	}
+
+	@RabbitListener(queues = "service.market")
+	public void receiveExchangeOrder(ExchangeOrder exchangeOrder)
+//			throws UnsupportedEncodingException 
+	{
+		System.out.println("[log]exchangeOrder: " + exchangeOrder);
+		saveOrder(exchangeOrder);
+
+//		System.out.println("[log]receiveMarketItem: "+marketItem);
+		System.out.println("[log]receiveMarketItem.Class.Name: " + exchangeOrder.getClass().getSimpleName());
+	}
+	
+	public MarketItem saveOrder(ExchangeOrder exchangeOrder) {
+		MarketItem marketItem = MarketItem
+				.builder()
+				.itemId(exchangeOrder.getItemId())
+				.hostName(exchangeOrder.getHostName())
+				.crcHave(exchangeOrder.getCrcHave())
+				.cntHave(exchangeOrder.getCntHave())
+				.crcWant(exchangeOrder.getCrcWant())
+				.cntWant(exchangeOrder.getCntWant())
+				.content(exchangeOrder.getContent())
+				.dday(exchangeOrder.getDday())
+				.status(exchangeOrder.isStatus())
+				.build();
+		System.out.println("[log]marketItem: " + marketItem);
+		repo.save(marketItem);
+		return marketItem;
+	}
+
+//====		보내는 쪽
+	private RabbitTemplate rabbit;
+
+	@Autowired
+	public MarketItemService(RabbitTemplate rabbit) {
+//		this.marketItemRepo = marketItemRepo;
+		this.rabbit = rabbit;
+	}
+	
+	public void sendItem(byte[] marketItem) {
+		rabbit.send("service.manager", new Message(marketItem));
+		rabbit.send("service.market", new Message(marketItem));
+	}
+	
+	
+	
+	
+
+}

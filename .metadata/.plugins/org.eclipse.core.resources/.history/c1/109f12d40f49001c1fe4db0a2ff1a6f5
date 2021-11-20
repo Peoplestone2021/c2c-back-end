@@ -1,0 +1,116 @@
+package com.git.c2cexchange.market;
+
+import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.transaction.Transactional;
+
+import org.springframework.amqp.core.Message;
+import org.springframework.amqp.rabbit.annotation.RabbitListener;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
+
+import com.git.c2cexchange.market.event.ExchangeOrder;
+import com.git.c2cexchange.market.request.MarketItemRequest;
+import com.google.gson.Gson;
+
+@Service
+public class MarketItemService {
+	
+	MarketItemRepository repo;
+	
+	public MarketItemService(MarketItemRepository repo) {
+		this.repo = repo;
+	}
+
+	@RabbitListener(queues = "service.market")
+	public void receiveExchangeOrder(ExchangeOrder exchangeOrder)
+			throws UnsupportedEncodingException 
+	{
+		System.out.println(exchangeOrder);
+		saveOrder(exchangeOrder);
+//		System.out.println(req.getHeader("content-type"));
+
+//		System.out.println("[log]receiveMarketItem: "+marketItem);
+//		System.out.println("[log]receiveMarketItem.Class.Name: "+marketItem.getClass().getName());
+//		saveMarketItem(marketItem);
+	}
+	
+	public MarketItem saveOrder(ExchangeOrder exchangeOrder) {
+//		public MarketItem saveMarketItem(MarketItem marketItem) {
+
+		MarketItem order = MarketItem
+				.builder()
+				.marketId(exchangeOrder.getMarketId())
+				.itemId(exchangeOrder.getItemId())
+				.hostName(exchangeOrder.getHostName())
+				.crcHave(exchangeOrder.getCrcHave())
+				.cntHave(exchangeOrder.getCntHave())
+				.crcWant(exchangeOrder.getCrcWant())
+				.cntWant(exchangeOrder.getCntWant())
+				.content(exchangeOrder.getContent())
+				.dday(exchangeOrder.getDday())
+				.status(exchangeOrder.isStatus())
+				.build();
+		System.out.println("[log]marketItemsRes: " + order);
+//		MarketItem marketItemRes = MarketItem.builder()
+//				.marketId(marketItem.getMarketId())
+//				.itemId(marketItem.getItemId())
+//				.hostName(marketItem.getHostName())
+//				.crcHave(marketItem.getCrcHave())
+//				.cntHave(marketItem.getCntHave())
+//				.crcWant(marketItem.getCrcWant())
+//				.cntWant(marketItem.getCntWant())
+//				.content(marketItem.getContent())
+//				.dday(marketItem.getDday())
+//				.status(marketItem.isStatus())
+//				.build();
+//		System.out.println("[log]marketItemsRes: " + marketItemRes);
+//		List<MarketItem> list = new ArrayList<MarketItem>();
+//		list.add(marketItemRes);
+//		marketItemRepo.save(marketItemRes);
+//		return marketItemRes;
+//		String data=new String(order);
+		repo.save(order);
+		return order;
+	}
+
+//	public SseEmitter getEmitter(String marketItem) {
+//		
+//		return this.emitters.get(marketItem);
+//	}
+//	public void putEmitter(String marketItem, SseEmitter emitter) {
+//		this.emitters.put(marketItem, emitter);
+//		System.out.println(emitters.size());
+//	}
+//	public void removeEmitter(String marketItem) {
+//		this.emitters.remove(marketItem);
+//	}
+//	private Map<String, SseEmitter> emitters = new ConcurrentHashMap<String, SseEmitter>();
+
+//====		보내는 쪽
+	private RabbitTemplate rabbit;
+
+	@Autowired
+	public MarketItemService(RabbitTemplate rabbit) {
+//		this.marketItemRepo = marketItemRepo;
+		this.rabbit = rabbit;
+	}
+	
+	public void sendItem(byte[] marketItem) {
+		rabbit.send("service.manager", new Message(marketItem));
+	}
+	
+	
+	
+	
+
+}

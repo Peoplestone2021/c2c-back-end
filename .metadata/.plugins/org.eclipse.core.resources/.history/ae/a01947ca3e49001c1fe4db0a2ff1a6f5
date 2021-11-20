@@ -1,0 +1,73 @@
+package com.git.c2cexchange.market;
+
+import java.io.UnsupportedEncodingException;
+
+import org.springframework.amqp.core.Message;
+import org.springframework.amqp.rabbit.annotation.RabbitListener;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.stereotype.Service;
+
+import com.git.c2cexchange.market.event.SaleListItem;
+
+@Service
+public class MarketItemService {
+	
+	MarketItemRepository repo;
+	
+	public MarketItemService(MarketItemRepository repo) {
+		this.repo = repo;
+	}
+
+//	@CacheEvict(value="orders", allEntries = true)
+	@RabbitListener(queues = "service.market")
+	public void receiveMarketItem(SaleListItem saleListItem)
+			throws UnsupportedEncodingException 
+	{
+//		System.out.println("[log]exchangeOrder: " + exchangeOrder);
+		saveOrder(saleListItem);
+
+//		System.out.println("[log]receiveMarketItem: "+marketItem);
+		System.out.println("[log]receiveMarketItem.Class.Name: " + saleListItem.getClass().getSimpleName());
+	}
+	
+	public MarketItem saveOrder(SaleListItem saleListItem) throws UnsupportedEncodingException  {
+		MarketItem marketItem = MarketItem
+				.builder()
+				.marketId(saleListItem.getMarketId())
+				.itemId(saleListItem.getItemId())
+				.hostName(saleListItem.getHostName())
+				.crcHave(saleListItem.getCrcHave())
+				.cntHave(saleListItem.getCntHave())
+				.crcWant(saleListItem.getCrcWant())
+				.cntWant(saleListItem.getCntWant())
+				.content(saleListItem.getContent())
+				.dday(saleListItem.getDday())
+				.status(saleListItem.isStatus())
+				.build();
+		
+		System.out.println("[log]saveOrder: " + marketItem);
+		MarketItem marketItemSaved = repo.save(marketItem);
+		return marketItemSaved;
+	}
+
+//====		보내는 쪽
+	private RabbitTemplate rabbit;
+
+	@Autowired
+	public MarketItemService(RabbitTemplate rabbit) {
+//		this.marketItemRepo = marketItemRepo;
+		this.rabbit = rabbit;
+	}
+	
+	public void sendItem(byte[] marketItem) {
+		rabbit.send("service.manager", new Message(marketItem));
+		rabbit.send("service.market", new Message(marketItem));
+	}
+	
+	
+	
+	
+
+}

@@ -9,6 +9,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
@@ -20,15 +21,16 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
+import com.git.c2cexchange.Result;
 import com.git.c2cexchange.lib.TextProcesser;
+import com.git.c2cexchange.market.event.ExchangeOrder;
+import com.git.c2cexchange.market.request.MarketItemRequest;
 
 @RestController
 public class MarketItemController {
 	
-	private MarketItemRepository repo;
+	MarketItemRepository repo;
 	private MarketItemService service;
-//	private Map<String, String> clientConnectedMap = new HashMap<String, String>();
-
 	
 	@Autowired
 	public MarketItemController(MarketItemRepository repo) {
@@ -37,48 +39,35 @@ public class MarketItemController {
 	
 	@GetMapping(value="/marketItems")
 	public List<MarketItem> getMarketItems() throws InterruptedException{
-		return repo.findAll(Sort.by("itemId").descending());
+		return repo.findAll(Sort.by("marketId").descending());
 	}
 	
-	@GetMapping("/marketItems/paging")
+	@GetMapping(value="/saleItemList")
+	public List<MarketItem>getSaleItems() throws InterruptedException{
+		return repo.findAll(Sort.by("marketId").descending());
+	}
+
+	@Cacheable(value="market", condition="(#page + 1) * #size <= 10"
+			,key="#crcHave+'-'+#page+'-'+#size")
+	@GetMapping("/marketItems/{crcHave}")
 	public Page<MarketItem> getMarketItemsPaging(@RequestParam int page, @RequestParam int size){
-		return repo.findAll(PageRequest.of(page,  size, Sort.by("itemId").descending()));
+		return repo.findAll(PageRequest.of(page,  size, Sort.by("marketId").descending()));
 	}
 	
-	@GetMapping("/event/{itemId}")
-	public SseEmitter recieveEvent(@PathVariable String itemId) {
-		// emitter 발생객체
-		SseEmitter emitter = service.getEmitter(itemId);
-		if (emitter != null) {
-			service.removeEmitter(itemId);
-		}
-		emitter = new SseEmitter(-1L);
+//	====		service recieve
+//	private MarketItemService service;
 
-		service.putEmitter(itemId, emitter);
-
-		try {
-			emitter.send("connected");
-//			emitter.send(SseEmitter.event().name("connect").data("connect").build());
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-
-		return emitter;
-	}
-
-	
 	
 	//====		service sendMessage
-	public MarketItemController(MarketItemService service) {
+	MarketItemController(MarketItemService service) {
 		this.service=service;
 	}
-
+	
 	@PostMapping(value = "/send-message")
 	public boolean sendItem(@RequestBody String marketItem, HttpServletRequest req) {
 		System.out.println(req.getHeader("content-type"));
 		System.out.println(marketItem);
-		service.sendItem(marketItem.getBytes());
+//		service.sendItem(marketItem);
 		
 		return true;
 	}
@@ -124,10 +113,5 @@ public class MarketItemController {
 		
 		return marketItemSaved;
 	}
-//	
-//	@GetMapping("/event/{itemId}")
-//	public SseEmitter
-	
-	
 
 }

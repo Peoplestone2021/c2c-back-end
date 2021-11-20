@@ -6,6 +6,7 @@ import java.util.List;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -44,6 +45,7 @@ public class SaleListController {
 	public SaleList postsale(@RequestBody SaleList salelist, HttpServletResponse res ) throws InterruptedException, IOException {
 		// 세일 리스트에 객체 넣기
 		SaleList saleListItem = SaleList.builder()
+				.itemId(salelist.getItemId())
 				.hostName(salelist.getHostName())
 				.crcHave(salelist.getCrcHave())
 				.cntHave(salelist.getCntHave())
@@ -56,20 +58,20 @@ public class SaleListController {
 		// DB에 매물정보 저장
 		repo.save(saleListItem);
 		
-		// saleLIstItem은 Stirng 배열
-		ObjectMapper mapper = new ObjectMapper();
-		// String array -> json
-		String jsonString = mapper.writeValueAsString(saleListItem);
-		System.out.println(jsonString);
-		
-		// byte 배열 메세지 생성
-		// saleListItem을 massage byte배열에 저장
-		byte[] message = jsonString.getBytes();
-
-		// 변환한 byte[] 확인
-		System.out.println(message);
-		// rabbitmq 로 메세지 전송
-		service.sendMessage(message);
+//		// saleLIstItem은 Stirng 배열
+//		ObjectMapper mapper = new ObjectMapper();
+//		// String array -> json
+//		String jsonString = mapper.writeValueAsString(saleListItem);
+//		System.out.println(jsonString);
+//		
+//		// byte 배열 메세지 생성
+//		// saleListItem을 massage byte배열에 저장
+//		byte[] message = jsonString.getBytes();
+//
+//		// 변환한 byte[] 확인
+//		System.out.println(message);
+//		// rabbitmq 로 메세지 전송
+		service.sendSaleList(saleListItem);
 		// 완료시 http 코드 보냄
 		res.setStatus(HttpServletResponse.SC_CREATED);
 		
@@ -78,11 +80,11 @@ public class SaleListController {
 	
 	// 메세지 통신 테스트용 매핑
 	@PostMapping(value = "/send-message")
-	public boolean sendMessage(@RequestBody String message, HttpServletRequest req) {
-		System.out.println(req.getHeader("content-type"));
-		System.out.println("controller.sendMessage(before_getByte): "+message);
-		service.sendMessage(message.getBytes());
-		System.out.println("controller.sendMessage(after_getByte): "+message);
+	public boolean sendMessage(SaleList saleListItem, HttpServletRequest req) {
+//		System.out.println(req.getHeader("content-type"));
+		System.out.println("controller.sendMessage(before_getByte): "+saleListItem);
+		service.sendConvertedMessage(saleListItem);
+//		service.sendConvertedMessage(message);
 		
 		return true;
 	}

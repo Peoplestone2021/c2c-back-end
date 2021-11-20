@@ -2,13 +2,16 @@ package com.git.c2cexchange.Item;
 
 import java.util.List;
 
+import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
 
 import lombok.Data;
 
 @Data
 public class MarketItemDataResponse {
-	private int response;
+	@Id
+	@GeneratedValue
+	private int marketId;
 	@Id
 	private int itemId;
 	private String hostName;

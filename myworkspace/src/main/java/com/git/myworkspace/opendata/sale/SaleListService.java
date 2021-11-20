@@ -17,11 +17,19 @@ public class SaleListService {
 		this.rabbit = rabbit;
 	}
 	
-	public void sendMessage(byte[] message) {
+	public void sendSaleList(SaleList saleList) {
 //		rabbit.send("test.hello.1", new Message(message));
-		rabbit.send("service.lobby", new Message(message));
-		rabbit.send("service.market", new Message(message));
+//		rabbit.send("service.lobby", new Message(message));
+		rabbit.convertAndSend("service.market", saleList);
+//		rabbit.convertAndSend("service.market", message);
 //		rabbit.send("test.hello.3", new Message(message));
-		System.out.println("service.sendMessage: "+message);
+//		System.out.println("service.sendMessage: "+saleList);
+		System.out.println("send.saleList.getClass: "+saleList.getClass().getSimpleName());
+//		System.out.println("service.convertAndSendMessage: "+message);
+	}
+	
+	public void sendConvertedMessage(SaleList saleList) {
+		rabbit.convertAndSend("service.lobby", saleList);
+		rabbit.convertAndSend("service.market", saleList);
 	}
 }
